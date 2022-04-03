@@ -15,7 +15,7 @@ Resources:
       Timeout: 10 # seconds, 900 max
       Environment:
         Variables:
-          ENDPOINT: "${SageMakerEndpoint}"
+          ENDPOINT: ${SageMakerEndpoint}
       Policies:
         - AmazonS3FullAccess
         - AmazonSageMakerFullAccess
