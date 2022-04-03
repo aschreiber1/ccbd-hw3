@@ -4,10 +4,11 @@ import json
 import botocore
 import sys
 from hashlib import md5
+import os
 
 maketrans = str.maketrans
 vocabulary_length = 9013
-endpoint = 'ccbd-hw3'
+endpoint = os.environ['ENDPOINT']
 
 def vectorize_sequences(sequences, vocabulary_length):
     results = np.zeros((len(sequences), vocabulary_length))
