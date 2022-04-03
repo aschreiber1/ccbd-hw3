@@ -1,0 +1,44 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: SAM Template for Deploy Python code to Lambda
+Resources:
+  LambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: ccbd-hw3-lambda-cf
+      CodeUri: /tmp/output.zip
+      Handler: lambda.lambda_handler
+      Runtime: python3.9
+      MemorySize: 128
+      Timeout: 10 # seconds, 900 max
+      Policies:
+        - AmazonS3FullAccess
+        - AmazonSageMakerFullAccess
+        - AmazonSESFullAccess
+      Events:
+        EmailUploadedEvent:
+          Type: S3
+          Properties:
+            Bucket: !Ref EmailSrcBucket
+            Events: s3:ObjectCreated:Put
+  EmailSrcBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: "ccbd-hw3-emails-cf"
+    # roles
+  EmailSrcBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref EmailSrcBucket
+      PolicyDocument:
+        Statement:
+          -
+            Action:
+              - s3:GetObject
+            Effect: Allow
+            Resource:
+              - !Sub arn:aws:s3:::${EmailSrcBucket}
+              - !Sub arn:aws:s3:::${EmailSrcBucket}/*
+            Principal:
+              AWS:
+                - '*'
