@@ -9,6 +9,8 @@ Resources:
       CodeUri: /tmp/output.zip
       Handler: lambda.lambda_handler
       Runtime: python3.9
+      Layers:
+        - arn:aws:lambda:us-east-1:770693421928:layer:Klayers-p39-numpy:2
       MemorySize: 128
       Timeout: 10 # seconds, 900 max
       Environment:
