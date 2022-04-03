@@ -11,6 +11,9 @@ Resources:
       Runtime: python3.9
       MemorySize: 128
       Timeout: 10 # seconds, 900 max
+      Environment:
+        Variables:
+          ENDPOINT: "${SageMakerEndpoint}"
       Policies:
         - AmazonS3FullAccess
         - AmazonSageMakerFullAccess
