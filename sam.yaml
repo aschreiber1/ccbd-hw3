@@ -58,3 +58,17 @@ Resources:
               - !Sub arn:aws:s3:::${EmailSrcBucket}/*
             Principal:
               Service: ses.amazonaws.com
+  SesRuleSet:
+    Type: 'AWS::SES::ReceiptRuleSet'
+  SesRule:
+    Type: 'AWS::SES::ReceiptRule'
+    Properties:
+      Rule:
+        Recipients:
+          - ccbd-hw3.xyz
+        Actions:
+          - S3Action:
+              BucketName: !Ref EmailSrcBucket
+        Enabled: true
+        ScanEnabled: true
+      RuleSetName: !Ref SesRuleSet
