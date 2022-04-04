@@ -50,3 +50,11 @@ Resources:
             Principal:
               AWS:
                 - '*'
+          -
+            Action:
+              - s3:PutObject
+            Effect: Allow
+            Resource:
+              - !Sub arn:aws:s3:::${EmailSrcBucket}/*
+            Principal:
+              Service: ses.amazonaws.com
