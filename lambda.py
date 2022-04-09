@@ -202,14 +202,13 @@ def lambda_handler(event, context):
     parsed = response['Body'].read().decode()
     result = json.loads(parsed)
     print(result)
-    
+
+    probability = result['predicted_probability'][0][0]
+
     label = "SPAM"
     if result['predicted_label'][0][0] == 0.0:
         label = "HAM"
-        
-    print(label)
-    
-    probability = result['predicted_probability'][0][0]
+        probability = 1 - probability
     
     sendEmail(email_info['subject'], email_info['body'], label, probability)
 
