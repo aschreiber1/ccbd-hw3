@@ -5,6 +5,9 @@ import botocore
 import sys
 from hashlib import md5
 import os
+from email.parser import BytesParser
+from email import policy
+from datetime import date
 
 maketrans = str.maketrans
 vocabulary_length = 9013
@@ -123,9 +126,69 @@ def hashing_trick(text, n,
                                 lower=lower,
                                 split=split)
     return [int(hash_function(w) % (n - 1) + 1) for w in seq]
+    
+def getEmailText(event):
+    bucket = event['Records'][0]['s3']['bucket']['name']
+    key = event['Records'][0]['s3']['object']['key']
+    
+    print('Bucket: {}, Key: {}'.format(bucket, key))
+   
+    s3 = boto3.client('s3')
+    obj = s3.get_object(Bucket=bucket, Key=key)
+    email = obj['Body'].read()
+    
+    parsed = BytesParser(policy=policy.SMTP).parsebytes(email)
+    plain = parsed.get_body(preferencelist=('plain'))
+    plain = ''.join(plain.get_content().splitlines(keepends=True))
+    
+    print(plain)
+    
+    subject = parsed.get('Subject')
+    print(subject)
+    
+    return { 'body' : plain, 'subject' : subject }
+    
+def sendEmail(subject, body, classificaiton, score):
+    client = boto3.client('ses')
+    today = date.today()
+    formatted = today.strftime("%b-%d-%Y")
+    
+    body = body[:240] #they only want first 240 chars
+    
+    body = """ We received your email sent on {} with the subject: \"{}\". 
+            
+        Here is a 240 character sample of the email body: 
+        {}
+            
+        The email was categorized as {} with a {} % confidence.""".format(formatted, subject, body, classificaiton, score*100)
+    
+    response = client.send_email(
+        Destination={
+            'ToAddresses': [
+                'ajs2409@columbia.edu'
+            ],
+        },
+        Message={
+            'Body': {
+                'Text': {
+                    'Charset': 'UTF-8',
+                    'Data': body,
+                },
+            },
+            'Subject': {
+                'Charset': 'UTF-8',
+                'Data': 'SES/Lambda Based SPAM Predictor',
+            },
+        },
+        Source='test@ccbd-hw3.xyz',
+    )
 
 def lambda_handler(event, context):
-    test_messages = ["FreeMsg: Txt: CALL to No: 86888 & claim your reward of 3p?txtStop"]
+    print(event)
+    
+    email_info = getEmailText(event)
+    
+    test_messages = [email_info['body']]
     one_hot_test_messages = one_hot_encode(test_messages, vocabulary_length)
     encoded_test_messages = vectorize_sequences(one_hot_test_messages, vocabulary_length)
 
@@ -139,6 +202,16 @@ def lambda_handler(event, context):
     parsed = response['Body'].read().decode()
     result = json.loads(parsed)
     print(result)
+    
+    label = "SPAM"
+    if result['predicted_label'][0][0] == 0.0:
+        label = "HAM"
+        
+    print(label)
+    
+    probability = result['predicted_probability'][0][0]
+    
+    sendEmail(email_info['subject'], email_info['body'], label, probability)
 
    # print(event)
     return {
